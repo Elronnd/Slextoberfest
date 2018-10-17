@@ -1,3 +1,5 @@
 #!/bin/sh
 
-sbcl --load run.lisp
+sudo nginx -c $PWD/nginx/nginx.conf -s stop > /dev/null 2> /dev/null # handle any zombie nginxes
+sudo nginx -c $PWD/nginx/nginx.conf
+rlwrap sbcl --load run.lisp
