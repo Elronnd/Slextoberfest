@@ -1,1 +1,5 @@
 Tentative code for a Slash'EM Extended tournament that might even run next october!
+
+To run, run './run'
+
+(Actual run instructions: run sbcl --load run.lisp, and make nginx serve files from the 'static' dir to /static and proxy everything else to a fastCGI server running on localhost:4242 and also set up SSL.  But for testing purposes just running ./run is fine.)
