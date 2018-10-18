@@ -44,9 +44,10 @@
 
 ; uniformly handles interpolated stuff
 (defun interp-handle (obj)
-  (if (listp obj)
-      (html-to-str obj)
-      (write-to-string obj)))
+  (cond
+    ((listp obj) (html-to-str obj))
+    ((stringp obj) obj)
+    (T (write-to-string obj))))
 
 (defun html-to-str (lis)
   (let ((this (car lis)))
@@ -57,12 +58,12 @@
                                            (map 'list #'eval (cdr this)))))
       ((equalp (Car this) '$) (interp-handle (eval (cdr this))))
       (T
-       (format nil "<~A~A>~A"
+       (format nil "<~A~A>~A~A"
                (string-downcase (symbol-name (car this)))
                (keywords-rest (cdr this))
                (if (fset:contains? *self-closing-elems* (car this))
                    ""
-                   (format nil "~A</~A>~A"
+                   (format nil "~A</~A>"
                            (elems-rest (cdr this) T)
-                           (string-downcase (symbol-name (car this)))
-                           (html-to-str (cdr lis)))))))))
+                           (string-downcase (symbol-name (car this)))))
+               (html-to-str (cdr lis)))))))

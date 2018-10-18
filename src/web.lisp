@@ -13,7 +13,7 @@
 (setf (ningle:route *app* "/")
       (lambda (params)
         (declare (ignore params)) ; for now, to hide the warning
-        (html '((head (link :type text/css :rel stylesheet :href /static/stylesheet.css)) (body (@ *header*))))))
+        (html '((head (link :type (@ "text/css") :rel stylesheet :href /static/stylesheet.css)) (body (@ *header*))))))
 
 (defun web-quit ()
   (clack:stop *handler*))

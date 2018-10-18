@@ -3,5 +3,5 @@
   (:export :*header*))
 
 (defparameter *header* '((a :href "/test" "linky!")
-                         (br)
-                         (span "Here is some normal text")))
+                         (br)))
+                         ;"Here is some normal text"))
