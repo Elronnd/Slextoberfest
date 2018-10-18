@@ -25,6 +25,12 @@
                               (elems-rest (cdr lis) nil)))
       ((keywordp head) (elems-rest (cddr lis) is-first))))) ;ignore
 
+(defun sym-or-string (a)
+  (cond
+    ((stringp a) a)
+    ((symbolp a) (string-downcase (symbol-name a)))
+    (T (error "Expected string or symbol"))))
+
 
 ; and this handles the :style "background-color:black"
 (defun keywords-rest (lis)
@@ -32,22 +38,31 @@
     (cond
       ((null lis) "")
       ((keywordp head) (format nil " ~A=\"~A\"~A"
-                               (string-downcase (symbol-name head)) (cadr lis)
+                               (string-downcase (symbol-name head)) (sym-or-string (cadr lis))
                                (keywords-rest (cddr lis))))
       (T (keywords-rest (cdr lis))))))
 
+; uniformly handles interpolated stuff
+(defun interp-handle (obj)
+  (if (listp obj)
+      (html-to-str obj)
+      (write-to-string obj)))
+
 (defun html-to-str (lis)
   (let ((this (car lis)))
-    (if (null this)
-        ""
-        (format nil "<~A~A>~A"
-                (string-downcase (symbol-name (car this)))
-                (keywords-rest (cdr this))
-                (if (fset:contains? *self-closing-elems* (car this))
-                    ""
-                    (format nil "~A</~A>~A"
-                            (elems-rest (cdr this) T)
-                            (string-downcase (symbol-name (car this)))
-                            (html-to-str (cdr lis))))))))
-      ;((contains? *self-closing-elems* (car this))
-      ;  ""
+    (cond
+      ((null this) "")
+      ((equalp (car this) '@) (reduce (lambda (a b) (concatenate 'string a b))
+                                      (map 'list #'interp-handle
+                                           (map 'list #'eval (cdr this)))))
+      ((equalp (Car this) '$) (interp-handle (eval (cdr this))))
+      (T
+       (format nil "<~A~A>~A"
+               (string-downcase (symbol-name (car this)))
+               (keywords-rest (cdr this))
+               (if (fset:contains? *self-closing-elems* (car this))
+                   ""
+                   (format nil "~A</~A>~A"
+                           (elems-rest (cdr this) T)
+                           (string-downcase (symbol-name (car this)))
+                           (html-to-str (cdr lis)))))))))

@@ -2,8 +2,8 @@
 (asdf:load-system :sob)
 
 (defun reload ()
-  (asdf:load-system :sob)
   (web-quit)
+  (asdf:load-system :sob)
   (web-main))
 
 (web-main)
