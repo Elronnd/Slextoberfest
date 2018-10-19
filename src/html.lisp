@@ -8,11 +8,34 @@
 ; self-closing elements like <link>, <br>
 (defparameter *self-closing-elems* (fset:set 'link 'br))
 
+; stringifies things in the way that I would like and probably not in a way that would be appreciated by anyone else
+(defun stringify (obj)
+  (cond
+    ((listp obj) (html-to-str obj))
+    ((stringp obj) obj)
+    (T (write-to-string obj))))
+
+(defun interp-fn (obj)
+  (if (listp obj)
+      (cond
+        ((equalp (car obj) '$) (handle-interps (eval (cdr obj))))
+        ((equalp (car obj) '@) (handle-interps (eval (cadr obj))))
+        ((equalp (car obj) '@u) (cons '@span (map 'list #'eval (cdr obj)))) ; (u)pcase list into parent context
+        ((equalp (car obj) '@f) (apply #'format (cons nil (cdr obj)))) ; (f)ormatted text
+        (T (handle-interps obj)))
+      obj))
+
+(defun handle-interps (lis)
+  (if (listp lis)
+      (map 'list #'interp-fn lis)
+      lis))
+
+
 (defun html (lis)
-  (format nil "<!doctype html>~%<html lang=\"en\">~A</html>" (html-to-str lis)))
+  (format nil "<!doctype html><html lang=\"en\">~A</html>" (html-to-str (handle-interps lis))))
 
 ; in '(b :style "background-color:black" (i "nein") "frobert"), handles (i "nein") "frobert"
-(defun elems-rest (lis is-first)
+(defun elems-rest (lis &optional (is-first T))
   (let ((head (car lis)))
     (cond
       ((null lis) "")
@@ -42,21 +65,13 @@
                                (keywords-rest (cddr lis))))
       (T (keywords-rest (cdr lis))))))
 
-; uniformly handles interpolated stuff
-(defun interp-handle (obj)
-  (cond
-    ((listp obj) (html-to-str obj))
-    ((stringp obj) obj)
-    (T (write-to-string obj))))
 
 (defun html-to-str (lis)
   (let ((this (car lis)))
     (cond
       ((null this) "")
-      ((equalp (car this) '@) (reduce (lambda (a b) (concatenate 'string a b))
-                                      (map 'list #'interp-handle
-                                           (map 'list #'eval (cdr this)))))
-      ((equalp (Car this) '$) (interp-handle (eval (cdr this))))
+      ((equalp (car this) '@span) (reduce (lambda (a b) (concatenate 'string a b))
+                                          (map 'list #'elems-rest (cdr this))))
       (T
        (format nil "<~A~A>~A~A"
                (string-downcase (symbol-name (car this)))
